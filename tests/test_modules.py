@@ -318,9 +318,13 @@ def test_input_released_when_socket_drops(env: Env, token: str):
             ws.send_json({"type": "auth", "token": token})
             ws.receive_json()
             ws.send_json({"type": "input", "ev": [["b", "left", "down"], ["k", "shift", "down"]]})
-            ws.send_json({"type": "pong"})
-            time.sleep(0.3)
-        time.sleep(0.3)
+            deadline = time.time() + 3
+            while ("key", "shift", True) not in backend.log and time.time() < deadline:
+                time.sleep(0.02)
+        # the socket is gone: whatever was held must be let go
+        deadline = time.time() + 3
+        while ("key", "shift", False) not in backend.log and time.time() < deadline:
+            time.sleep(0.02)
     assert ("button", "left", False) in backend.log
     assert ("key", "shift", False) in backend.log
 

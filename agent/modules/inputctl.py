@@ -297,7 +297,8 @@ def build(ctx: "Context") -> APIRouter:
             await asyncio.to_thread(svc.apply, events, id(conn))
 
     async def on_close(conn: "Conn") -> None:
-        await asyncio.to_thread(svc.release, id(conn))
+        # synchronous on purpose: this runs in a finally block that may be getting cancelled
+        svc.release(id(conn))
 
     ctx.disconnect_hooks.append(on_close)
 

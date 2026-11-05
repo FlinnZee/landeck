@@ -109,7 +109,9 @@ def create_app(ctx: Context) -> FastAPI:
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI):
-        ctx.hub.attach(asyncio.get_running_loop())
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(_quiet_resets)
+        ctx.hub.attach(loop)
         tasks = [asyncio.create_task(job()) for job in ctx.background]
         tasks.append(asyncio.create_task(_network_watch(ctx)))
         try:
@@ -248,6 +250,13 @@ def create_app(ctx: Context) -> FastAPI:
 
     app.mount("/", StaticFiles(directory=web), name="web")
     return GuardMiddleware(app, ctx)  # type: ignore[return-value]
+
+
+def _quiet_resets(loop: asyncio.AbstractEventLoop, context: dict[str, Any]) -> None:
+    # Windows' proactor loop logs a traceback every time a phone drops a socket; that's normal here
+    if isinstance(context.get("exception"), (ConnectionResetError, ConnectionAbortedError)):
+        return
+    loop.default_exception_handler(context)
 
 
 async def _network_watch(ctx: Context) -> None:
