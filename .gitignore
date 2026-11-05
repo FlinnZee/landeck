@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.spec
+*.log
+.devhome/
+.screens/
+.claude/
+LANDECK_SPEC.md
+REPORT.md
