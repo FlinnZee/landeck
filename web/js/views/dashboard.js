@@ -176,6 +176,19 @@ export default function dashboard(root) {
     } catch { /* stats keep flowing anyway */ }
   }
 
+  let seeded = false;
+  const offHistory = conn.on('stats.history', (rows) => {
+    if (seeded) return;
+    seeded = true;
+    // rows: [cpu, down, up, read, write] for the last minute; the newest one arrives as a normal stats event
+    for (const [c, dn, upv, r, w] of rows.slice(0, -1)) {
+      sparkCpu.data[0].push(c);
+      sparkNet.data[0].push(dn);
+      sparkNet.data[1].push(upv);
+      sparkIo.data[0].push(r);
+      sparkIo.data[1].push(w);
+    }
+  });
   const offStats = conn.on('stats', onStats);
   const unsub = conn.sub('stats');
   loadInfo();
@@ -185,6 +198,7 @@ export default function dashboard(root) {
     refresh() { loadInfo(); },
     destroy() {
       offStats();
+      offHistory();
       unsub();
       [cpu.ring, ram.ring, third.ring, sparkCpu, cores, sparkNet, sparkIo].forEach((x) => x.destroy());
     },

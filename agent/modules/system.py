@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import threading
 import time
+from collections import deque
 from typing import TYPE_CHECKING, Any
 
 import psutil
@@ -99,6 +100,8 @@ class Sampler:
     def __init__(self, ctx: "Context"):
         self.ctx = ctx
         self.latest: dict[str, Any] | None = None
+        # last minute of the numbers the sparklines draw, so a fresh dashboard isn't empty
+        self.history: deque[list[float]] = deque(maxlen=60)
         self._stop = threading.Event()
         self._procs: dict[int, psutil.Process] = {}
         self._last_net = psutil.net_io_counters()
@@ -128,6 +131,9 @@ class Sampler:
                 watching = self.ctx.hub.has_subscribers("stats")
                 snap = self.sample(full=watching)
                 self.latest = snap
+                net, dio = snap["net"], snap["disk_io"]
+                self.history.append([round(snap["cpu"]["total"], 1), round(net["down"]), round(net["up"]),
+                                     round(dio["read"]), round(dio["write"])])
                 self._alerts.check(snap)
                 if watching:
                     self.ctx.hub.publish("stats", snap)
@@ -291,6 +297,8 @@ def build(ctx: "Context") -> APIRouter:
     async def on_sub(conn: "Conn") -> None:
         if not ctx.config.feature("dashboard"):
             return
+        if sampler.history:
+            await conn.send({"type": "stats.history", "data": list(sampler.history)})
         if sampler.latest:
             await conn.send({"type": "stats", "data": sampler.latest})
 
