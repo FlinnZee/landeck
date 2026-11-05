@@ -74,6 +74,8 @@ class ProcessService:
             for p in psutil.process_iter(["pid", "name", "username", "memory_info", "create_time", "ppid"]):
                 info = p.info
                 pid = info["pid"]
+                if pid == 0:  # "System Idle Process" is just idle time
+                    continue
                 alive.add(pid)
                 cached = self._cache.get(pid)
                 if cached is None or cached.create_time() != info.get("create_time"):

@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import mimetypes
 import time
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,11 @@ from .modules import MODULES
 from .security import is_lan, is_loopback
 
 log = logging.getLogger("landeck.server")
+
+# the Windows registry sometimes maps .js to text/plain, which breaks ES modules
+for _ext, _type in ((".js", "text/javascript"), (".css", "text/css"), (".svg", "image/svg+xml"),
+                    (".webmanifest", "application/manifest+json"), (".png", "image/png")):
+    mimetypes.add_type(_type, _ext)
 
 APP_CSP = (
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "

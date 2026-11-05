@@ -299,7 +299,10 @@ class FileService:
             disk = {"free": usage.free, "total": usage.total}
         except OSError:
             disk = None
-        return {"root": root_id, "path": rel, "items": items, "truncated": truncated, "disk": disk}
+        tok = self.ctx.signer.sign(dev_id, "zip", {"r": root_id, "p": rel})
+        zip_name = quote(path.name or self.root(root_id)["name"])
+        return {"root": root_id, "path": rel, "items": items, "truncated": truncated, "disk": disk,
+                "zip": f"/api/v1/dl/{tok}/{zip_name}.zip"}
 
     # --- thumbnails -------------------------------------------------------
 
