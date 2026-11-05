@@ -8,7 +8,7 @@ dist/
 *.spec
 *.log
 .devhome/
+.frozenhome/
 .screens/
-.claude/
 LANDECK_SPEC.md
 REPORT.md
