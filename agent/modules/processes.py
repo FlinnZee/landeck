@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import logging
 import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -295,10 +296,15 @@ def build(ctx: "Context") -> APIRouter:
     @r.post("/apps/open-url")
     async def open_url(request: Request, body: dict[str, Any] = Body(...), dev: dict = Depends(gate)):
         url = str(body.get("url") or "").strip()
-        if url and "://" not in url:
+        # "example.com" or "host:8080/x" get https://, anything with its own scheme must be http(s)
+        if url and "://" not in url and not re.match(r"^[a-z][a-z0-9+.-]*:(?!\d)", url, re.IGNORECASE):
             url = "https://" + url
         parts = urlsplit(url)
-        if parts.scheme not in ("http", "https") or not parts.netloc:
+        try:
+            _ = parts.port
+        except ValueError:
+            parts = urlsplit("")
+        if parts.scheme not in ("http", "https") or not parts.hostname:
             raise ApiError(400, "bad_url", "Only http(s) links can be opened.")
         if not ctx.dry_run:
             import webbrowser

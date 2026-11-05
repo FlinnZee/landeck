@@ -110,7 +110,17 @@ class SendInputBackend:
         return i
 
     def move(self, dx: int, dy: int) -> None:
-        self._send(self._mouse(MOUSEEVENTF_MOVE, dx, dy))
+        # Position absolutely from the current cursor so Windows' own pointer acceleration
+        # doesn't stack on top of the phone's curve. Relative input is the fallback.
+        pt = wintypes.POINT()
+        if not self.user32.GetCursorPos(ctypes.byref(pt)):
+            self._send(self._mouse(MOUSEEVENTF_MOVE, dx, dy))
+            return
+        sm = self.user32.GetSystemMetrics
+        vx, vy, vw, vh = sm(76), sm(77), sm(78), sm(79)
+        x = min(max(pt.x + dx, vx), vx + vw - 1)
+        y = min(max(pt.y + dy, vy), vy + vh - 1)
+        self.move_abs(x, y)
 
     def move_abs(self, x: int, y: int) -> None:
         sm = self.user32.GetSystemMetrics

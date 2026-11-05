@@ -100,11 +100,11 @@ class Hub:
 
     async def emit(self, topic: str, data: Any, device_id: str | None = None) -> None:
         msg = {"type": topic, "data": data}
-        targets = [
-            c for c in list(self.conns)
-            if (device_id is None or c.device["id"] == device_id)
-            and (topic in BROADCAST_TOPICS or topic in c.topics)
-        ]
+        if device_id is not None:
+            # addressed to one device (terminal output, ...): no subscription needed
+            targets = [c for c in list(self.conns) if c.device["id"] == device_id]
+        else:
+            targets = [c for c in list(self.conns) if topic in BROADCAST_TOPICS or topic in c.topics]
         if targets:
             await asyncio.gather(*(c.send(msg) for c in targets))
 
