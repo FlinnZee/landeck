@@ -38,7 +38,8 @@ It reconnects by itself after sleep, Wi-Fi drops, IP changes and agent restarts,
 
 ## Quick start
 
-1. Download `LANDECK.exe` (or build it, see below) and run it. Windows asks for admin rights once.
+1. Download `LANDECK.exe` from [Releases](https://github.com/FlinnZee/landeck/releases/latest) (or build it, see
+   below) and run it. Windows asks for admin rights once.
    A tray icon appears; LanDeck registers itself to start at sign-in.
 2. Click the tray icon → **Pair new device**. A QR code and a 6-digit code show up in the browser.
 3. Scan the QR with the iPhone camera and open the link. Safari warns about the certificate the first time:
