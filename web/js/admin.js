@@ -171,9 +171,10 @@ function renderPair() {
   async function start() {
     let p;
     try { p = await call('/pair', { method: 'POST' }); } catch (err) { fail(err); return; }
-    let mdns = false;
-    const qr = h('div', { class: 'qr', html: p.qr });
-    const link = h('code', { class: 'small pair-url' }, p.urls.ip);
+    // default to the landeck.local QR: it connects far more reliably from iPhones than a raw IP
+    let mdns = true;
+    const qr = h('div', { class: 'qr', html: p.qr_mdns });
+    const link = h('code', { class: 'small pair-url' }, p.urls.mdns);
     const left = h('span', { class: 'num' });
     const ring = h('div', { class: 'pair-ring' });
     const swapQr = h('button', { class: 'btn small ghost', onclick: () => {
@@ -181,7 +182,7 @@ function renderPair() {
       qr.innerHTML = mdns ? p.qr_mdns : p.qr;
       link.textContent = mdns ? p.urls.mdns : p.urls.ip;
       swapQr.lastChild.textContent = mdns ? 'Use IP address' : 'Use landeck.local';
-    } }, icon('globe'), h('span', null, 'Use landeck.local'));
+    } }, icon('globe'), h('span', null, 'Use IP address'));
     swap(box, h('div', { class: 'card pair-live' },
       qr,
       h('div', { class: 'pair-side stack' },

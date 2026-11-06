@@ -126,3 +126,7 @@ class Advertiser:
                 pass
             self._zc = None
             self._info = None
+
+    def alive(self) -> bool:
+        with self._lock:
+            return self._zc is not None

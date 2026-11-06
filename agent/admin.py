@@ -40,11 +40,14 @@ def qr_svg(text: str) -> str:
 
 
 def pair_urls(ctx: "Context", secret: str) -> dict[str, str]:
-    host = ctx.ips[0] if ctx.ips else "landeck.local"
+    ip = ctx.ips[0] if ctx.ips else "landeck.local"
     return {
-        "ip": f"https://{host}:{ctx.port}/pair#{secret}",
+        "ip": f"https://{ip}:{ctx.port}/pair#{secret}",
         "mdns": f"https://landeck.local:{ctx.port}/pair#{secret}",
-        "host": f"https://{host}:{ctx.port}",
+        # landeck.local is the address we steer phones to: it survives IP changes and
+        # is far more reliable on iOS than a raw private IP with a self-signed cert.
+        "host": f"https://landeck.local:{ctx.port}",
+        "ip_host": f"https://{ip}:{ctx.port}",
     }
 
 

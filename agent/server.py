@@ -264,6 +264,10 @@ async def _network_watch(ctx: Context) -> None:
         await asyncio.sleep(20)
         try:
             await asyncio.to_thread(ctx.refresh_network)
+            # landeck.local is now the main way in, so keep the mDNS record alive if it ever drops
+            if ctx.ips and not ctx.advertiser.alive():
+                log.info("mDNS registration was lost; re-advertising")
+                await asyncio.to_thread(ctx.advertiser.start, ctx.ips)
         except Exception:
             log.exception("network refresh failed")
 

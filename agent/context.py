@@ -87,13 +87,19 @@ class Context:
             return True
         from urllib.parse import urlsplit
 
+        from .security import is_lan
+
         try:
             parts = urlsplit(origin)
             port = parts.port or (443 if parts.scheme == "https" else 80)
         except ValueError:
             return False
-        return parts.scheme == "https" and (parts.hostname or "").lower() in self.trusted_hosts() \
-            and port == self.port
+        if parts.scheme != "https" or port != self.port:
+            return False
+        host = (parts.hostname or "").lower()
+        # a known name/IP, or any private-LAN address on our port: the latter keeps a phone
+        # that was added to the Home Screen on one IP working after the PC's IP changes.
+        return host in self.trusted_hosts() or is_lan(host)
 
     def server_info(self) -> dict[str, Any]:
         return {

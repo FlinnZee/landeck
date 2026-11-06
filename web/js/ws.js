@@ -73,10 +73,23 @@ class Connection {
   candidates() {
     const last = load(LAST_KEY) || {};
     const port = state.server?.port || last.port || location.port || 8765;
-    const list = [location.origin, `https://landeck.local:${port}`];
+    // landeck.local first: on iOS a raw private IP over a self-signed cert is flaky,
+    // while the mDNS name is treated as local and connects reliably.
+    const mdns = `https://landeck.local:${port}`;
+    const list = [mdns, location.origin];
     if (last.origin) list.push(last.origin);
     for (const ip of state.server?.ips || last.ips || []) list.push(`https://${ip}:${port}`);
     return [...new Set(list)];
+  }
+
+  async pick() {
+    const cands = this.candidates();
+    const mdns = cands.find((c) => c.includes('landeck.local'));
+    // probe every address at once so a dead/old origin can't delay finding a live one
+    const results = await Promise.all(cands.map(async (c) => ({ c, ok: await this.probe(c) })));
+    const good = new Set(results.filter((r) => r.ok).map((r) => r.c));
+    if (mdns && good.has(mdns)) return mdns;
+    return cands.find((c) => good.has(c)) || null;
   }
 
   async probe(origin) {
@@ -99,10 +112,7 @@ class Connection {
     this.connecting = true;
     if (state.conn === 'online') set({ conn: 'reconnecting' });
     try {
-      let origin = null;
-      for (const candidate of this.candidates()) {
-        if (await this.probe(candidate)) { origin = candidate; break; }
-      }
+      const origin = await this.pick();
       if (!origin) throw new Error('unreachable');
       await this.open(origin);
     } catch {
