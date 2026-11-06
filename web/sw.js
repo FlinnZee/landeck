@@ -1,5 +1,5 @@
 // Caches the app shell only. API calls and the socket always go to the network.
-const CACHE = 'landeck-shell-v2';
+const CACHE = 'landeck-shell-v3';
 const SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -7,7 +7,7 @@ const SHELL = [
   '/js/app.js', '/js/api.js', '/js/ws.js', '/js/store.js', '/js/ui.js', '/js/router.js', '/js/icons.js', '/js/charts.js', '/js/clip.js',
   '/js/views/actions.js', '/js/views/clipboard.js', '/js/views/dashboard.js', '/js/views/files.js', '/js/views/media.js',
   '/js/views/more.js', '/js/views/pair.js', '/js/views/power.js', '/js/views/processes.js', '/js/views/remote.js',
-  '/js/views/settings.js', '/js/views/terminal.js',
+  '/js/views/settings.js', '/js/views/terminal.js', '/js/player.js', '/js/vendor/hls.min.js',
   '/icons/icon-192.png', '/icons/apple-touch-icon.png',
 ];
 

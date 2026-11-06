@@ -13,6 +13,8 @@ const FEATURE_INFO = {
   processes: ['Processes & apps', 'Process list, ending tasks, launching apps, opening links.'],
   actions: ['Quick actions', 'Run the buttons defined below.'],
   notify: ['Messages', 'Phones can pop up notifications on this PC.'],
+  ram: ['RAM cleaner', 'One-tap free up of memory from the phone.'],
+  stream: ['Video streaming', 'Watch movies on the phone (HEVC/HDR streamed with ffmpeg).'],
   terminal: ['Terminal', 'Admin PowerShell from the phone. Needs a PIN. Off by default.'],
   remote_action_editing: ['Edit actions from phone', 'Lets paired phones change the quick actions. Off by default.'],
 };
@@ -100,6 +102,12 @@ async function renderOverview() {
         h('a', { class: 'btn small', href: '/ca.cer', download: 'LanDeck-CA.cer' }, icon('download'), 'CA certificate (.cer)'),
         h('a', { class: 'btn small', href: '/ca.mobileconfig' }, icon('phone'), 'iPhone profile'),
         h('button', { class: 'btn small', onclick: trustCert }, icon('shield'), 'Trust on this PC'))),
+    h('h2', { class: 'h2 a-sub' }, 'Video streaming'),
+    h('div', { class: `notice ${ov.ffmpeg && ov.ffmpeg.available ? '' : 'warn'}` }, icon(ov.ffmpeg && ov.ffmpeg.available ? 'check' : 'alert'),
+      ov.ffmpeg && ov.ffmpeg.available
+        ? h('div', null, h('b', null, 'ffmpeg found'), ov.ffmpeg.nvenc ? ' · NVIDIA GPU encoding available' : ' · CPU encoding (no NVENC)',
+          h('div', { class: 'small dim mono' }, ov.ffmpeg.path))
+        : h('div', null, h('b', null, 'ffmpeg not found.'), ' Movies can’t be streamed to phones until you install it (e.g. ', h('code', null, 'winget install Gyan.FFmpeg'), ') or set its path in the config.')),
     h('h2', { class: 'h2 a-sub' }, 'Maintenance'),
     h('div', { class: 'card row wrap-row' },
       h('button', { class: 'btn', onclick: restart }, icon('restart'), 'Restart agent'),

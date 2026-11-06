@@ -175,6 +175,45 @@
 .preview-audio { width: 100%; }
 .preview-text { max-height: 46vh; overflow: auto; padding: 14px; border-radius: 14px; background: var(--surface-2); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; user-select: text; -webkit-user-select: text; }
 .preview-generic { display: grid; justify-items: center; gap: 10px; padding: 22px 0; }
+.preview-play { width: 100%; aspect-ratio: 16/9; border-radius: 14px; background: #000; display: grid; place-content: center; justify-items: center; gap: 10px; color: var(--text); }
+.play-circle { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); box-shadow: 0 10px 30px -8px rgb(var(--accent-rgb) / .8); }
+.play-circle .icon { width: 30px; height: 30px; fill: currentColor; stroke: none; margin-left: 3px; }
+
+/* ---- movie player ----------------------------------------------------- */
+
+body.player-open { overflow: hidden; }
+.player {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  animation: view-in 200ms var(--ease-out);
+}
+.player-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 8px) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+  background: linear-gradient(180deg, rgba(0, 0, 0, .7), transparent);
+  pointer-events: none;
+}
+.player-top > * { pointer-events: auto; }
+.player-top .icon-btn { color: #fff; background: rgba(0, 0, 0, .35); }
+.player-title { flex: 1; color: #fff; font-weight: 600; font-size: 15px; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.player-badge { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(0, 0, 0, .5); color: #e6edf3; display: flex; align-items: center; gap: 5px; }
+.player-badge .icon { width: 14px; height: 14px; }
+.player-badge .warn { color: var(--warn); display: inline-flex; align-items: center; gap: 5px; }
+.player-stage { flex: 1; position: relative; display: grid; place-items: center; min-height: 0; }
+.player-video { width: 100%; height: 100%; max-height: 100%; background: #000; object-fit: contain; }
+.player-loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; background: rgba(0, 0, 0, .55); padding: 24px; text-align: center; }
+.player-loading .load-msg { color: #cbd5e1; }
 
 /* ---- control: actions ------------------------------------------------- */
 

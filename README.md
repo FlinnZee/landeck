@@ -25,6 +25,7 @@ an app.
   the active window. Ring gauges and 60-second sparklines, alerts when the PC is struggling, plus a one-tap **Clean RAM**
   button that empties working sets and purges the standby cache.
 - **Wake display** – turn the screen off from the phone and turn it straight back on again from the Control tab.
+- **Watch movies** – stream video from the PC to the phone. H.264/HEVC is copied, not re-encoded, so 4K HEVC HDR movies play at original quality with HDR intact and seeking works; only incompatible audio (DTS, TrueHD) is converted to AAC. MKV/AVI and other containers play too. Needs ffmpeg on the PC; uses the GPU (NVENC) only when a codec truly can’t be played directly.
 - **Remote** – a proper trackpad (tap, two-finger right click and scroll, tap-and-drag, three-finger swipes), a
   keyboard with sticky modifiers, F-keys and common shortcuts, and a live screen view you can pinch, pan and tap to click.
 - **Files** – browse every drive connected to the PC (C:, other disks, USB sticks, SD cards, network drives) plus the

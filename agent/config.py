@@ -29,6 +29,7 @@ FEATURES: dict[str, bool] = {
     "actions": True,
     "notify": True,
     "ram": True,
+    "stream": True,
     "terminal": False,
     "remote_action_editing": False,
 }
@@ -41,6 +42,7 @@ DEFAULTS: dict[str, Any] = {
     "default_roots": True,
     "show_drives": True,
     "upload_dir": "",
+    "ffmpeg_path": "",
     "clipboard_persist": False,
     "screen_toast": True,
     "autostart": True,

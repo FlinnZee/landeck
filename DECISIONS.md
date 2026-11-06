@@ -66,3 +66,18 @@ Small calls made while building, one line each, so future me knows why.
   `psutil.disk_partitions` + `GetDriveType`/`GetVolumeInformation`, so plugging in a USB stick makes it appear. A
   `show_drives` admin toggle (default on) can hide them; the per-drive root still enforces the same realpath/commonpath
   and junction checks, so `..` can't escape the drive.
+
+## v1.2.0
+
+- Video streaming so movies play on the phone. HLS with fragmented-MP4 segments, generated on demand and aligned to
+  keyframes, so seeking works without pre-processing the whole file. H.264/HEVC video is stream-copied (full quality,
+  HDR10 preserved, hvc1 tag for Apple); audio is copied when AAC, else converted to AAC stereo. Unsupported video
+  codecs transcode via NVENC (h264, SDR, capped 1080p) as a fallback.
+- Stream URLs carry a per-session capability token (?k=), because iOS's native HLS player can't send our auth header,
+  exactly like the file download links. Playlist/init/segment endpoints validate that token instead of the bearer.
+- The phone uses native HLS on iOS Safari (hardware HEVC/HDR path) and hls.js everywhere else; hls.js is vendored at
+  web/js/vendor/hls.min.js (MIT) to stay offline/no-CDN. CSP gains worker-src blob: for hls.js's worker.
+- ffmpeg/ffprobe are discovered on PATH, in the winget package dirs, or from a configured ffmpeg_path; the feature
+  reports unavailable (with install hint) when missing instead of failing mid-playback.
+- Lesson: validate web modules with `node --input-type=module --check`; plain `node --check` parses as a script and
+  missed an extra ")" that the browser's module parser rejected.

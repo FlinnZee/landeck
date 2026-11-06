@@ -82,6 +82,9 @@ def build(ctx: "Context") -> APIRouter:
             "viewing": bool(ctx.services["screen"].streams),
             "data_dir": str(ctx.home),
             "dry_run": ctx.dry_run,
+            "ffmpeg": {"available": ctx.services["stream"].ff.available,
+                       "nvenc": ctx.services["stream"].ff.nvenc,
+                       "path": ctx.services["stream"].ff.ffmpeg or ""},
         }
 
     @r.get("/startup")

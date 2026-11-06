@@ -35,7 +35,7 @@ for _ext, _type in ((".js", "text/javascript"), (".css", "text/css"), (".svg", "
 APP_CSP = (
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
     "connect-src 'self' https: wss:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
-    "worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    "worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 )
 CORS_HEADERS = "Authorization, Content-Type, X-LanDeck, X-Terminal-Session"
 

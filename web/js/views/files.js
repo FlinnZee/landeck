@@ -1,4 +1,5 @@
 import { api, url } from '../api.js';
+import { openPlayer } from '../player.js';
 import { navigate } from '../router.js';
 import { prefs, setPref, state } from '../store.js';
 import {
@@ -375,8 +376,11 @@ export default function files(root, { match }) {
     const src = url(item.url);
     let media;
     if (item.kind === 'image') media = h('img', { class: 'preview-img', src, alt: item.name });
-    else if (item.kind === 'video') media = h('video', { class: 'preview-media', src, controls: true, playsinline: true, preload: 'metadata' });
-    else if (item.kind === 'audio') media = h('audio', { class: 'preview-audio', src, controls: true, preload: 'metadata' });
+    else if (item.kind === 'video') {
+      // stream it (works for MKV/HEVC/HDR, not just MP4) via the full-screen player
+      media = h('button', { class: 'preview-play', onclick: () => { s.close(); openPlayer(loc.root, item.path, item.name); } },
+        h('div', { class: 'play-circle' }, icon('play')), h('div', { class: 'small dim' }, 'Play on phone'));
+    } else if (item.kind === 'audio') media = h('audio', { class: 'preview-audio', src, controls: true, preload: 'metadata' });
     else if (item.kind === 'text' || item.kind === 'code') {
       media = h('pre', { class: 'preview-text' }, 'Loading…');
       fetch(src, { headers: { Range: 'bytes=0-200000' } }).then((r) => r.text()).then((t) => { media.textContent = t || '(empty file)'; })

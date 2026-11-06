@@ -635,3 +635,60 @@ async def test_show_drives_toggle(env: Env, token: str):
     async with env.client(token=token) as c:
         ids = {r["id"] for r in (await c.get("/api/v1/files/roots")).json()["roots"]}
         assert any(i.startswith("drive-") for i in ids)
+
+
+# --- video streaming -----------------------------------------------------------------------
+
+import shutil as _shutil  # noqa: E402
+
+HAS_FFMPEG = _shutil.which("ffmpeg") is not None
+
+
+def test_plan_segments():
+    from agent.modules.stream import plan_segments
+    kf = [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+    segs = plan_segments(kf, 10.0)
+    assert segs[0][0] == 0.0
+    assert abs(sum(d for _, d in segs) - 10.0) < 0.01  # segments cover the whole duration
+    assert all(d > 0 for _, d in segs)
+
+
+def test_direct_play_decision(env: Env):
+    svc = env.ctx.services["stream"]
+    assert svc.direct_play({"video": {"codec": "hevc", "dolby_vision": False, "transfer": "smpte2084"}})[0] is True
+    assert svc.direct_play({"video": {"codec": "h264", "dolby_vision": False, "transfer": ""}})[0] is True
+    assert svc.direct_play({"video": {"codec": "av1", "dolby_vision": False, "transfer": ""}})[0] is False
+
+
+async def test_stream_feature_gate(env: Env, token: str):
+    env.ctx.config.set_feature("stream", False)
+    async with env.client(token=token) as c:
+        assert (await c.get(f"/api/v1/stream/info?root={env.root_id()}&path=x.mp4")).status_code == 403
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg not installed")
+async def test_stream_end_to_end(env: Env, token: str):
+    import subprocess as sp
+    clip = env.share / "clip.mp4"
+    sp.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=320x240:rate=24:duration=2",
+            "-f", "lavfi", "-i", "sine=duration=2", "-c:v", "libx264", "-g", "24", "-keyint_min", "24",
+            "-pix_fmt", "yuv420p", "-c:a", "aac", str(clip)], check=True)
+    rid = env.root_id()
+    async with env.client(token=token) as c:
+        info = (await c.get(f"/api/v1/stream/info?root={rid}&path=clip.mp4")).json()
+        assert info["available"] and info["video"]["codec"] == "h264" and info["direct_play"] is True
+        op = (await c.post("/api/v1/stream/open", json={"root": rid, "path": "clip.mp4"})).json()
+        sid, m3u8 = op["session"], op["m3u8"]
+        assert op["segments"] >= 1 and op["transcode"] is False
+        k = m3u8.split("k=")[1]
+        pl = await c.get(f"/api/v1/stream/{sid}/index.m3u8?k={k}")
+        assert pl.status_code == 200 and f"init.mp4?k={k}" in pl.text and f"s0.m4s?k={k}" in pl.text
+        # wrong token refused
+        assert (await c.get(f"/api/v1/stream/{sid}/index.m3u8?k=wrong")).status_code == 403
+        init = await c.get(f"/api/v1/stream/{sid}/init.mp4?k={k}")
+        assert init.status_code == 200 and init.content[:4] and len(init.content) > 100
+        seg = await c.get(f"/api/v1/stream/{sid}/s0.m4s?k={k}")
+        assert seg.status_code == 200 and len(seg.content) > 1000
+        assert (await c.delete(f"/api/v1/stream/{sid}")).status_code == 200
+        # session gone after close
+        assert (await c.get(f"/api/v1/stream/{sid}/index.m3u8?k={k}")).status_code == 404
