@@ -35,3 +35,20 @@ Small calls made while building, one line each, so future me knows why.
 - Service worker is network-first for the shell and never touches `/api`, `/ws` or `/admin`; registration failures are ignored.
 - Icons are hand-drawn Lucide-style paths bundled in `web/js/icons.js`; no icon font, no CDN.
 - Tests run with `LANDECK_DRY_RUN=1`: power, input, kill, file delete and toasts are recorded instead of executed.
+
+## v1.1
+
+- Phones now prefer `https://landeck.local` over the raw IP everywhere (pairing QR default, first connection candidate),
+  because iOS handles a self-signed cert on an mDNS `.local` name far better than on a raw private IP. The IP stays as a
+  fallback the parallel probe can still pick.
+- Connection probing is parallel, not sequential, so a dead/old origin (e.g. a Home-Screen app pinned to a past IP) no
+  longer delays finding a live address.
+- `origin_ok` now accepts any private-LAN IP on our port, not just the current one, so a phone added to the Home Screen
+  on one IP keeps working after the PC's IP changes. Bearer token + the custom header already make the API CSRF-immune.
+- mDNS is re-advertised automatically if the registration ever drops, since `landeck.local` is now the main way in.
+- RAM cleaner calls `NtSetSystemInformation` directly via ctypes (no native code), the same mechanism as Mem Reduct.
+  SeProfileSingleProcessPrivilege is LUID 13 (29 is SeImpersonate) — getting that wrong silently fails the purges.
+- Default clean set: working sets, standby + low-priority standby, system file cache, combine memory (win10+),
+  registry cache (win8.1+). It reports freed bytes as the rise in available memory.
+- Wake display nudges the mouse one pixel and sets ES_DISPLAY_REQUIRED; the SC_MONITORPOWER "on" message alone is
+  unreliable from a background process, the input event is what actually wakes the screen.

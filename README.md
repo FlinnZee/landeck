@@ -22,13 +22,16 @@ and serves a mobile web app over HTTPS on your LAN. Open it in Safari, add it to
 an app.
 
 - **Dashboard** – CPU (per core), memory, disks, network and disk speed, NVIDIA GPU, battery, uptime, top processes,
-  the active window. Ring gauges and 60-second sparklines, alerts when the PC is struggling.
+  the active window. Ring gauges and 60-second sparklines, alerts when the PC is struggling, plus a one-tap **Clean RAM**
+  button that empties working sets and purges the standby cache.
+- **Wake display** – turn the screen off from the phone and turn it straight back on again from the Control tab.
 - **Remote** – a proper trackpad (tap, two-finger right click and scroll, tap-and-drag, three-finger swipes), a
   keyboard with sticky modifiers, F-keys and common shortcuts, and a live screen view you can pinch, pan and tap to click.
 - **Files** – browse shared folders, thumbnails, previews, resumable chunked uploads, ranged downloads (video seeking
   works), folders as zip, rename/delete (to the Recycle Bin), open on PC, search.
-- **Control** – power (lock, display off, sleep, restart, shut down, schedules with a countdown), volume and a per-app
-  mixer, media keys and now playing, output device switching, and a grid of quick actions you define on the PC.
+- **Control** – power (lock, display off, wake display, sleep, restart, shut down, schedules with a countdown), volume
+  and a per-app mixer, media keys and now playing, output device switching, and a grid of quick actions you define on
+  the PC.
 - **Clipboard** – two-way sync, history with pins and search, images both ways, passwords masked until tapped.
 - **Processes & apps** – sortable live list, end tasks (critical system processes are protected), launch Start Menu
   apps, open links on the PC, send a notification to the PC.
@@ -136,10 +139,12 @@ tools/            icon generator, screenshot and smoke-test helpers
 
 ## Troubleshooting
 
-- **The phone can't connect.** Check that both are on the same Wi-Fi, the network is Private in Windows, and that
-  `https://<pc-ip>:8765` opens in Safari. Guest networks often isolate devices from each other.
-- **The address changed.** Try `https://landeck.local:8765`, or reserve an IP for the PC in your router.
-  If the app reached the PC on a new address it offers to move over.
+- **The phone can't connect, or connects by name but not by IP.** Use `https://landeck.local:8765`. On iPhones a raw
+  private IP over a self-signed certificate is unreliable, while the `landeck.local` name is treated as local and
+  connects cleanly, so the pairing QR and the app both prefer it. Make sure both devices are on the same Wi-Fi, the
+  network is Private in Windows, and the network isn't a guest network that isolates devices.
+- **The address changed.** `https://landeck.local:8765` keeps working across IP changes; you can also reserve an IP for
+  the PC in your router. The app finds the PC again on its own.
 - **Windows Defender or SmartScreen flags the exe.** A PyInstaller exe that controls the PC and asks for admin looks
   suspicious to heuristics; it's a known false-positive class and the exe isn't code-signed. Add an exclusion for the
   folder, or use the onedir zip, which is flagged less often. You can also build it yourself from this source.
@@ -165,3 +170,7 @@ tools/            icon generator, screenshot and smoke-test helpers
 ## Credits
 
 Made and maintained by **TK NiRMAL**. Released under the MIT License.
+
+The RAM cleaner frees memory through the same documented Windows kernel calls
+(`NtSetSystemInformation`) that [Mem Reduct](https://github.com/henrypp/memreduct) uses; its approach was the
+reference for which memory lists to purge. LanDeck calls those APIs directly and bundles no Mem Reduct code.

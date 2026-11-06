@@ -513,3 +513,80 @@ def test_terminal_streams_real_output(env: Env, token: str):
                 env.ctx.dry_run = True
     assert "landeck-ok" in out and "42" in out
     assert code == 0
+
+
+# --- RAM cleaner ---------------------------------------------------------------------------
+
+async def test_ram_info_and_clean(env: Env, token: str):
+    cleaner = env.ctx.services["ram"]
+    async with env.client(token=token) as c:
+        info = (await c.get("/api/v1/memory")).json()
+        assert info["total"] > 0 and info["can_clean"] is True
+        ids = {r["id"] for r in info["regions"]}
+        assert {"working_sets", "standby"} <= ids
+        res = (await c.post("/api/v1/memory/clean")).json()
+        assert "freed" in res and res["before"]["total"] == res["after"]["total"]
+        # dry-run runs the default region set without touching real memory
+        assert res["regions"] and not res["failed"]
+    assert cleaner.calls  # recorded, not executed
+    assert any(e["action"] == "ram.clean" for e in env.ctx.audit.tail())
+
+
+async def test_ram_specific_regions(env: Env, token: str):
+    async with env.client(token=token) as c:
+        res = (await c.post("/api/v1/memory/clean", json={"regions": ["standby"]})).json()
+        assert res["regions"] == ["standby"]
+        bad = await c.post("/api/v1/memory/clean", json={"regions": "nope"})
+        assert bad.status_code == 400
+
+
+async def test_ram_feature_gate(env: Env, token: str):
+    env.ctx.config.set_feature("ram", False)
+    async with env.client(token=token) as c:
+        assert (await c.get("/api/v1/memory")).status_code == 403
+        assert (await c.post("/api/v1/memory/clean")).status_code == 403
+
+
+def test_ram_privilege_constant():
+    # SeProfileSingleProcessPrivilege is LUID 13 (not 29 = SeImpersonate); the purge calls need it
+    from agent.modules import ram
+    assert ram.SE_PROFILE_SINGLE_PROCESS_PRIVILEGE == 13
+
+
+# --- display on/off + wake action ----------------------------------------------------------
+
+async def test_display_on_off(env: Env, token: str):
+    backend = env.ctx.services["power"].backend
+    async with env.client(token=token) as c:
+        assert (await c.post("/api/v1/power/display-off")).status_code == 200
+        assert (await c.post("/api/v1/power/display-on")).status_code == 200
+    assert ("display_off",) in backend.calls and ("display_on",) in backend.calls
+
+
+async def test_builtin_actions_wake_and_ram(env: Env, token: str):
+    async with env.client(token=token) as c:
+        items = {a["id"] for a in (await c.get("/api/v1/actions")).json()["items"]}
+        assert {"clean-ram", "wake-display"} <= items
+        assert (await c.post("/api/v1/actions/wake-display/run")).json()["exit_code"] == 0
+        ram = await c.post("/api/v1/actions/clean-ram/run")
+        assert ram.json()["exit_code"] == 0 and "MB" in ram.json()["output"]
+    assert ("display_on",) in env.ctx.services["power"].backend.calls
+
+
+# --- connectivity: pairing prefers landeck.local -------------------------------------------
+
+async def test_pairing_urls_prefer_mdns(env: Env):
+    async with env.local() as admin:
+        data = (await admin.post("/admin/api/pair")).json()
+    assert data["urls"]["host"].startswith("https://landeck.local:")
+    assert "landeck.local" in data["urls"]["mdns"]
+    assert data["qr_mdns"]
+
+
+async def test_origin_accepts_any_lan_ip(env: Env):
+    # a phone added to the Home Screen on an old IP keeps working after the PC's IP changes
+    assert env.ctx.origin_ok("https://192.168.5.23:8765") is True
+    assert env.ctx.origin_ok("https://10.1.2.3:8765") is True
+    assert env.ctx.origin_ok("https://8.8.8.8:8765") is False
+    assert env.ctx.origin_ok("https://evil.example:8765") is False
+    assert env.ctx.origin_ok("http://192.168.1.4:8765") is False
