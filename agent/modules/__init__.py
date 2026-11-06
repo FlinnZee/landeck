@@ -7,10 +7,11 @@ from . import (
     notify,
     power,
     processes,
+    ram,
     screen,
     system,
     terminal,
 )
 
 # notify first: other modules push into its notification center
-MODULES = [notify, system, power, clipboard, files, media, inputctl, screen, processes, actions, terminal]
+MODULES = [notify, system, power, clipboard, files, media, inputctl, screen, processes, ram, actions, terminal]

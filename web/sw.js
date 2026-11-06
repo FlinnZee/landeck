@@ -1,5 +1,5 @@
 // Caches the app shell only. API calls and the socket always go to the network.
-const CACHE = 'landeck-shell-v1';
+const CACHE = 'landeck-shell-v2';
 const SHELL = [
   '/',
   '/manifest.webmanifest',

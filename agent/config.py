@@ -28,6 +28,7 @@ FEATURES: dict[str, bool] = {
     "processes": True,
     "actions": True,
     "notify": True,
+    "ram": True,
     "terminal": False,
     "remote_action_editing": False,
 }

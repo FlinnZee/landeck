@@ -56,6 +56,13 @@
 .top-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 7px 2px; border-bottom: 1px solid var(--border); font-size: 15px; }
 .top-row:last-child { border-bottom: 0; }
 .window-line { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-faint); padding: 0 4px; }
+.ram-clean { gap: 10px; }
+.ram-clean .icon { color: var(--accent); }
+.ram-clean .ram-freed { margin-left: auto; color: var(--text-faint); font-weight: 500; }
+.ram-clean.running { opacity: .65; }
+.ram-clean.running .icon { animation: pulse 1s ease-in-out infinite; }
+.ram-clean.flash-ok { border-color: rgb(var(--ok-rgb) / .6); box-shadow: 0 0 0 1px rgb(var(--ok-rgb) / .3), 0 0 26px -8px rgb(var(--ok-rgb) / .7); }
+.ram-clean.flash-ok .icon, .ram-clean.flash-ok .ram-freed { color: var(--ok); }
 .window-line .icon { width: 15px; height: 15px; }
 .dash .card-head .h3 { flex: 1; }
 

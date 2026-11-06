@@ -43,6 +43,31 @@ export default function dashboard(root) {
   const third = gauge('GPU');
   const gauges = h('div', { class: 'card gauges' }, cpu.el, ram.el, third.el);
 
+  // one-tap RAM cleaner (frees working sets + standby cache, like Mem Reduct)
+  const ramFreed = h('span', { class: 'ram-freed tiny' });
+  const ramBtn = h('button', { class: 'btn block ram-clean', onclick: cleanRam },
+    icon('zap'), h('span', null, 'Clean RAM'), ramFreed);
+  const ramRow = state.features.ram === false ? null : ramBtn;
+
+  async function cleanRam() {
+    ramBtn.classList.add('running');
+    ramBtn.disabled = true;
+    ramFreed.textContent = '';
+    try {
+      const res = await api.post('/memory/clean');
+      const mb = Math.round(res.freed / 1048576);
+      ramBtn.classList.add('flash-ok');
+      ramFreed.textContent = mb > 0 ? `freed ${mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : mb + ' MB'}` : 'already lean';
+      setTimeout(() => ramBtn.classList.remove('flash-ok'), 1200);
+    } catch (err) {
+      const { errorToast } = await import('../ui.js');
+      errorToast(err, 'Couldn’t clean RAM');
+    } finally {
+      ramBtn.classList.remove('running');
+      ramBtn.disabled = false;
+    }
+  }
+
   const cpuSpark = h('canvas', { class: 'spark', 'aria-hidden': 'true' });
   const coreCanvas = h('canvas', { class: 'cores', 'aria-hidden': 'true' });
   const cpuNow = h('span', { class: 'num' }, '–');
@@ -85,7 +110,7 @@ export default function dashboard(root) {
 
   const skeleton = h('div', { class: 'stack' }, skeletonBlock(170), skeletonBlock(150), skeletonBlock(120));
   const live = h('div', { class: 'stack', hidden: true },
-    gauges, windowLine,
+    gauges, ramRow, windowLine,
     h('div', { class: 'grid-auto stack' }, cpuCard, netCard, ioCard, drivesCard, battery, topCard, infoCard));
   wrap.append(skeleton, live);
 
