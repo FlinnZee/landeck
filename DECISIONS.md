@@ -59,3 +59,10 @@ Small calls made while building, one line each, so future me knows why.
   browser can never reuse a stale stylesheet or script after an update. A phone that cached a broken `base.css` (serif
   font, giant icons) self-heals on the next load. The service worker falls back to cache with `ignoreSearch` so the
   version query doesn't break offline.
+
+## v1.1.2
+
+- Files now lists every mounted drive (C:, other disks, USB, SD cards, network drives) as a root, enumerated live via
+  `psutil.disk_partitions` + `GetDriveType`/`GetVolumeInformation`, so plugging in a USB stick makes it appear. A
+  `show_drives` admin toggle (default on) can hide them; the per-drive root still enforces the same realpath/commonpath
+  and junction checks, so `..` can't escape the drive.

@@ -27,8 +27,9 @@ an app.
 - **Wake display** – turn the screen off from the phone and turn it straight back on again from the Control tab.
 - **Remote** – a proper trackpad (tap, two-finger right click and scroll, tap-and-drag, three-finger swipes), a
   keyboard with sticky modifiers, F-keys and common shortcuts, and a live screen view you can pinch, pan and tap to click.
-- **Files** – browse shared folders, thumbnails, previews, resumable chunked uploads, ranged downloads (video seeking
-  works), folders as zip, rename/delete (to the Recycle Bin), open on PC, search.
+- **Files** – browse every drive connected to the PC (C:, other disks, USB sticks, SD cards, network drives) plus the
+  usual folders, with thumbnails, previews, resumable chunked uploads, ranged downloads (video seeking works), folders
+  as zip, rename/delete (to the Recycle Bin), open on PC, search. Drives can be switched off in the admin page.
 - **Control** – power (lock, display off, wake display, sleep, restart, shut down, schedules with a countdown), volume
   and a per-app mixer, media keys and now playing, output device switching, and a grid of quick actions you define on
   the PC.

@@ -603,3 +603,35 @@ async def test_shell_versions_assets(env: Env):
     assert f'href="/css/base.css?v={env.ctx.version}' in body
     assert f'src="/js/app.js?v={env.ctx.version}' in body
     assert "/css/tokens.css?v=" in body
+
+
+async def test_drives_as_roots(env: Env, token: str):
+    env.ctx.config.set("show_drives", True)
+    svc = env.ctx.services["files"]
+    drives = svc.drives()
+    assert drives, "expected at least one drive"
+    letters = {d["id"] for d in drives}
+    assert "drive-C" in letters
+    for d in drives:
+        assert d["drive"] is True and d["path"].endswith(":\\") and d["id"].startswith("drive-")
+    async with env.client(token=token) as c:
+        roots = (await c.get("/api/v1/files/roots")).json()["roots"]
+        cdrive = next(r for r in roots if r["id"] == "drive-C")
+        assert cdrive["drive"] is True and cdrive["disk"]["total"] > 0
+        # can browse the drive root, and traversal out of it is still refused
+        listing = await c.get("/api/v1/files/list", params={"root": "drive-C", "path": ""})
+        assert listing.status_code == 200
+        esc = await c.get("/api/v1/files/list", params={"root": "drive-C", "path": "../.."})
+        assert esc.status_code in (400, 403)
+
+
+async def test_show_drives_toggle(env: Env, token: str):
+    env.ctx.config.set("show_drives", False)
+    async with env.client(token=token) as c:
+        ids = {r["id"] for r in (await c.get("/api/v1/files/roots")).json()["roots"]}
+        assert not any(i.startswith("drive-") for i in ids)
+    async with env.local() as admin:
+        await admin.put("/admin/api/show-drives", json={"enabled": True})
+    async with env.client(token=token) as c:
+        ids = {r["id"] for r in (await c.get("/api/v1/files/roots")).json()["roots"]}
+        assert any(i.startswith("drive-") for i in ids)

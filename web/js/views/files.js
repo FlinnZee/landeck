@@ -288,10 +288,12 @@ export default function files(root, { match }) {
     swap(body,
       h('div', { class: 'list stagger' }, roots.map((r) => {
         const used = r.disk ? 1 - r.disk.free / r.disk.total : 0;
+        const ic = r.drive ? 'drive'
+          : r.id === 'downloads' ? 'download' : r.id === 'pictures' ? 'image' : r.id === 'videos' ? 'film' : 'folder';
         return h('button', { class: 'item', onclick: () => go(r.id) },
-          h('div', { class: 'item-icon accent' }, icon(r.id === 'downloads' ? 'download' : r.id === 'pictures' ? 'image' : r.id === 'videos' ? 'film' : 'folder')),
+          h('div', { class: 'item-icon accent' }, icon(ic)),
           h('div', { class: 'item-body' }, h('div', { class: 'item-title' }, r.name),
-            h('div', { class: 'item-sub' }, r.disk ? `${fmtBytes(r.disk.free)} free` : r.path),
+            h('div', { class: 'item-sub' }, r.disk ? `${fmtBytes(r.disk.free)} free of ${fmtBytes(r.disk.total)}` : r.path),
             r.disk && h('div', { class: `bar thin ${used > 0.9 ? 'danger' : ''}`, style: { marginTop: '6px' } }, h('i', { style: { width: `${used * 100}%` } }))),
           h('div', { class: 'item-end' }, icon('chevron-right')));
       })),

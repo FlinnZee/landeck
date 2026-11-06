@@ -27,6 +27,7 @@ class Env:
         self.share.mkdir()
         self.inbox = tmp / "inbox"
         self.ctx.config.set("default_roots", False)
+        self.ctx.config.set("show_drives", False)  # keep the test root deterministic
         self.ctx.config.set("roots", [{"name": "Share", "path": str(self.share)}])
         self.ctx.config.set("upload_dir", str(self.inbox))
         self.app = create_app(self.ctx)

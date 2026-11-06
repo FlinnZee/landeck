@@ -38,6 +38,8 @@ DEFAULTS: dict[str, Any] = {
     "name": "",
     "features": FEATURES,
     "roots": [],
+    "default_roots": True,
+    "show_drives": True,
     "upload_dir": "",
     "clipboard_persist": False,
     "screen_toast": True,

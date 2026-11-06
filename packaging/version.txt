@@ -14,12 +14,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'TK NiRMAL'),
         StringStruct('FileDescription', 'LanDeck - control this PC from your phone'),
-        StringStruct('FileVersion', '1.1.1'),
+        StringStruct('FileVersion', '1.1.2'),
         StringStruct('InternalName', 'LANDECK'),
         StringStruct('LegalCopyright', 'Copyright (c) 2026 TK NiRMAL. MIT License.'),
         StringStruct('OriginalFilename', 'LANDECK.exe'),
         StringStruct('ProductName', 'LanDeck'),
-        StringStruct('ProductVersion', '1.1.1')
+        StringStruct('ProductVersion', '1.1.2')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])

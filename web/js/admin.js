@@ -288,15 +288,20 @@ function renderFolders() {
   const path = h('input', { class: 'input', placeholder: 'D:\\Media', 'aria-label': 'Folder path' });
   const name = h('input', { class: 'input', placeholder: 'Name (optional)', 'aria-label': 'Folder name' });
   const upload = h('input', { class: 'input', value: ov.settings.upload_dir || '', placeholder: ov.upload_dir_effective, 'aria-label': 'Upload folder' });
-  const builtinOn = ov.roots.some((r) => r.builtin);
-  swap(el, title('Folders', 'Phones can only see inside these folders. Paths are checked so links and \u201c..\u201d can\u2019t escape.'),
+  const defaultOn = ov.settings.default_roots !== false;
+  const drivesOn = ov.settings.show_drives !== false;
+  const tagFor = (r) => (r.drive ? h('span', { class: 'tag' }, 'drive') : h('span', { class: 'tag' }, 'default'));
+  swap(el, title('Folders', 'Phones can only see inside these folders and drives. Paths are checked so links and \u201c..\u201d can\u2019t escape.'),
     h('div', { class: 'card flush' }, h('table', { class: 'a-table' },
       h('thead', null, h('tr', null, h('th', null, 'Name'), h('th', null, 'Path'), h('th', null, ''))),
       h('tbody', null, ov.roots.map((r) => h('tr', null, h('td', null, h('b', null, r.name)), h('td', { class: 'dim mono small' }, r.path),
-        h('td', { class: 'right' }, r.builtin ? h('span', { class: 'tag' }, 'default') : h('button', { class: 'btn small ghost', onclick: () => removeRoot(r.path) }, icon('trash'), 'Remove'))))))),
+        h('td', { class: 'right' }, r.builtin ? tagFor(r) : h('button', { class: 'btn small ghost', onclick: () => removeRoot(r.path) }, icon('trash'), 'Remove'))))))),
     h('div', { class: 'card row wrap-row', style: { marginTop: '12px' } },
+      h('div', { style: { flex: 1 } }, h('b', null, 'All drives'), h('div', { class: 'small dim' }, 'Every drive connected right now \u2014 C:, other disks, USB sticks, SD cards, network drives.')),
+      toggle(drivesOn, async (v, undo) => { try { await call('/show-drives', { method: 'PUT', body: { enabled: v } }); await refreshOverview(); renderFolders(); } catch (err) { undo(); fail(err); } }, 'Show all drives')),
+    h('div', { class: 'card row wrap-row' },
       h('div', { style: { flex: 1 } }, h('b', null, 'Default folders'), h('div', { class: 'small dim' }, 'Downloads, Desktop, Documents, Pictures and Videos.')),
-      toggle(builtinOn, async (v, undo) => { try { await call('/default-roots', { method: 'PUT', body: { enabled: v } }); await refreshOverview(); renderFolders(); } catch (err) { undo(); fail(err); } }, 'Default folders')),
+      toggle(defaultOn, async (v, undo) => { try { await call('/default-roots', { method: 'PUT', body: { enabled: v } }); await refreshOverview(); renderFolders(); } catch (err) { undo(); fail(err); } }, 'Default folders')),
     h('h2', { class: 'h2 a-sub' }, 'Add a folder'),
     h('div', { class: 'card row wrap-row' }, h('div', { style: { flex: 2, minWidth: '240px' } }, path), h('div', { style: { flex: 1, minWidth: '160px' } }, name),
       h('button', { class: 'btn primary', onclick: async () => {

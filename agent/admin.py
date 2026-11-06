@@ -73,7 +73,7 @@ def build(ctx: "Context") -> APIRouter:
             "features": ctx.config.features(),
             "feature_names": list(FEATURES),
             "settings": {k: ctx.config.get(k) for k in ("name", "upload_dir", "clipboard_persist", "screen_toast",
-                                                         "autostart", "port")},
+                                                         "autostart", "port", "default_roots", "show_drives")},
             "upload_dir_effective": str(ctx.services["files"].upload_dir()),
             "roots": ctx.services["files"].roots(),
             "pin_set": bool(ctx.config.get("terminal_pin")),
@@ -188,6 +188,12 @@ def build(ctx: "Context") -> APIRouter:
     @r.put("/default-roots")
     async def default_roots(body: dict[str, Any] = Body(...)):
         ctx.config.set("default_roots", bool(body.get("enabled", True)))
+        return {"roots": ctx.services["files"].roots()}
+
+    @r.put("/show-drives")
+    async def show_drives(body: dict[str, Any] = Body(...)):
+        ctx.config.set("show_drives", bool(body.get("enabled", True)))
+        ctx.audit("admin.show_drives", "on" if body.get("enabled") else "off", ip="127.0.0.1")
         return {"roots": ctx.services["files"].roots()}
 
     @r.get("/actions")

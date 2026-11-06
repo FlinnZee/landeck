@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
+import psutil
 from fastapi import APIRouter, Body, Depends, Query, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from starlette.requests import ClientDisconnect
@@ -48,6 +49,9 @@ KNOWN_FOLDERS = {
     "pictures": ("Pictures", "{33E28130-4E1E-4676-835A-98395C3BC3BB}"),
     "videos": ("Videos", "{18989B1D-99B5-455B-841C-AB7C74E4DDFC}"),
 }
+
+# GetDriveType() -> friendly name
+DRIVE_LABELS = {2: "Removable", 3: "Local disk", 4: "Network drive", 5: "CD drive", 6: "RAM disk"}
 
 _EXT_KINDS = {
     "image": "jpg jpeg png gif webp bmp tif tiff heic heif avif ico svg",
@@ -188,6 +192,37 @@ class FileService:
 
     # --- roots & paths ----------------------------------------------------
 
+    def drives(self) -> list[dict[str, Any]]:
+        """Every drive mounted right now - C:, D:, USB sticks, SD cards, network drives."""
+        try:
+            import win32api
+            import win32file
+        except ImportError:
+            win32api = win32file = None
+        out = []
+        for part in psutil.disk_partitions(all=False):
+            mp = part.mountpoint
+            if not mp or len(mp) < 2 or mp[1] != ":" or not os.path.isdir(mp):
+                continue
+            letter = mp[0].upper()
+            dtype = 3
+            if win32file is not None:
+                try:
+                    dtype = win32file.GetDriveType(mp)
+                except Exception:
+                    dtype = 3
+            kind = DRIVE_LABELS.get(dtype, "Disk")
+            label = ""
+            if win32api is not None:
+                try:
+                    label = (win32api.GetVolumeInformation(mp)[0] or "").strip()
+                except Exception:
+                    label = ""
+            name = f"{label} ({letter}:)" if label else f"{kind} ({letter}:)"
+            out.append({"id": f"drive-{letter}", "name": name, "path": f"{letter}:\\",
+                        "builtin": True, "drive": True, "kind": kind})
+        return out
+
     def roots(self) -> list[dict[str, Any]]:
         out = []
         if self.ctx.config.get("default_roots", True):
@@ -195,6 +230,8 @@ class FileService:
                 path = known_folder(guid) or str(Path.home() / label)
                 if os.path.isdir(path):
                     out.append({"id": rid, "name": label, "path": path, "builtin": True})
+        if self.ctx.config.get("show_drives", True):
+            out += self.drives()
         for extra in self.ctx.config.get("roots", []) or []:
             path = extra.get("path", "")
             if path and os.path.isdir(path):
@@ -586,7 +623,8 @@ def build(ctx: "Context") -> APIRouter:
                 disk = {"free": usage.free, "total": usage.total}
             except OSError:
                 disk = None
-            out.append({"id": root["id"], "name": root["name"], "path": root["path"], "disk": disk})
+            out.append({"id": root["id"], "name": root["name"], "path": root["path"], "disk": disk,
+                        "drive": root.get("drive", False), "kind": root.get("kind")})
         return {"roots": out, "upload_dir": str(svc.upload_dir())}
 
     @r.get("/files/list")
