@@ -6,6 +6,7 @@ import ctypes
 import logging
 import subprocess
 import time
+from ctypes import wintypes
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Body, Depends, Request
@@ -71,6 +72,20 @@ class RealPower:
         HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER = 0xFFFF, 0x0112, 0xF170
         ctypes.windll.user32.PostMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2)
 
+    def display_on(self) -> None:
+        # Tell the monitor to power on, keep the display awake briefly, and nudge the mouse by
+        # one pixel — the input event is what actually wakes a slept display and clears a screensaver.
+        HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER = 0xFFFF, 0x0112, 0xF170
+        ES_SYSTEM_REQUIRED, ES_DISPLAY_REQUIRED, ES_CONTINUOUS = 0x00000001, 0x00000002, 0x80000000
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        user32.PostMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, -1)
+        kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED)
+        user32.mouse_event.argtypes = [wintypes.DWORD, ctypes.c_long, ctypes.c_long, wintypes.DWORD, ctypes.c_void_p]
+        user32.mouse_event(0x0001, 1, 0, 0, 0)   # MOUSEEVENTF_MOVE +1px
+        user32.mouse_event(0x0001, -1, 0, 0, 0)  # and back
+        kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+
     def abort(self) -> None:
         self._shutdown_exe("/a")
 
@@ -87,6 +102,9 @@ class DryPower:
 
     def display_off(self) -> None:
         self.calls.append(("display_off",))
+
+    def display_on(self) -> None:
+        self.calls.append(("display_on",))
 
     def abort(self) -> None:
         self.calls.append(("abort",))
@@ -156,6 +174,12 @@ def build(ctx: "Context") -> APIRouter:
     async def display_off(request: Request, dev: dict = Depends(gate)):
         await asyncio.to_thread(svc.backend.display_off)
         ctx.audit("power.display_off", device=dev, ip=client_ip(request))
+        return {"ok": True}
+
+    @r.post("/power/display-on")
+    async def display_on(request: Request, dev: dict = Depends(gate)):
+        await asyncio.to_thread(svc.backend.display_on)
+        ctx.audit("power.display_on", device=dev, ip=client_ip(request))
         return {"ok": True}
 
     @r.post("/power/schedule")

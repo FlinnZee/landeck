@@ -15,7 +15,8 @@ export default function power(root) {
 
   const quick = h('div', { class: 'grid-2' },
     h('button', { class: 'tile', onclick: (e) => quickAct(e.currentTarget, 'lock') }, h('div', { class: 'tile-icon' }, icon('lock')), h('div', null, h('b', null, 'Lock'), h('div', { class: 'tiny faint' }, 'Back to the sign-in screen'))),
-    h('button', { class: 'tile', onclick: (e) => displayOff(e.currentTarget) }, h('div', { class: 'tile-icon' }, icon('monitor-off')), h('div', null, h('b', null, 'Display off'), h('div', { class: 'tiny faint' }, 'Any input wakes it'))));
+    h('button', { class: 'tile', onclick: (e) => displayOff(e.currentTarget) }, h('div', { class: 'tile-icon' }, icon('monitor-off')), h('div', null, h('b', null, 'Display off'), h('div', { class: 'tiny faint' }, 'Any input wakes it'))),
+    h('button', { class: 'tile', onclick: (e) => displayOn(e.currentTarget) }, h('div', { class: 'tile-icon accent' }, icon('sun')), h('div', null, h('b', null, 'Wake display'), h('div', { class: 'tiny faint' }, 'Turn the screen back on'))));
 
   const holds = h('div', { class: 'stack' });
   const sched = h('div', { class: 'card' });
@@ -38,7 +39,15 @@ export default function power(root) {
     tap(btn);
     try {
       await api.post('/power/display-off');
-      toast('Display off', { kind: 'ok', text: 'Move the trackpad to wake it.', timeout: 2200 });
+      toast('Display off', { kind: 'ok', text: 'Tap Wake display to turn it back on.', timeout: 2200 });
+    } catch (err) { errorToast(err); }
+  }
+
+  async function displayOn(btn) {
+    tap(btn);
+    try {
+      await api.post('/power/display-on');
+      toast('Display on', { kind: 'ok', timeout: 1600 });
     } catch (err) { errorToast(err); }
   }
 

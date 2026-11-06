@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("landeck.actions")
 
 TYPES = {"run", "open_url", "open_path", "keys", "power", "script", "builtin"}
-BUILTINS = {"volume", "mute_toggle", "screenshot", "display_off"}
+BUILTINS = {"volume", "mute_toggle", "screenshot", "display_off", "display_on", "clean_ram"}
 POWER = {"lock", "sleep", "hibernate", "shutdown", "restart", "signout"}
 COLORS = {"cyan", "violet", "green", "rose", "amber", "slate"}
 OUTPUT_LIMIT = 2048
@@ -42,6 +42,10 @@ DEFAULT_ACTIONS: list[dict[str, Any]] = [
      "keys": ["win", "d"]},
     {"id": "task-manager", "label": "Task Manager", "icon": "activity", "color": "amber", "type": "run",
      "exe": "taskmgr.exe", "args": []},
+    {"id": "clean-ram", "label": "Clean RAM", "icon": "zap", "color": "green", "type": "builtin",
+     "name": "clean_ram"},
+    {"id": "wake-display", "label": "Wake display", "icon": "sun", "color": "amber", "type": "builtin",
+     "name": "display_on"},
     {"id": "screenshot", "label": "Screenshot to Downloads", "icon": "camera", "color": "cyan",
      "type": "builtin", "name": "screenshot"},
     {"id": "downloads", "label": "Open Downloads", "icon": "download", "color": "green", "type": "open_path",
@@ -220,6 +224,15 @@ class ActionRunner:
         if name == "display_off":
             await asyncio.to_thread(ctx.services["power"].backend.display_off)
             return {"exit_code": 0, "output": "Display off"}
+        if name == "display_on":
+            await asyncio.to_thread(ctx.services["power"].backend.display_on)
+            return {"exit_code": 0, "output": "Display on"}
+        if name == "clean_ram":
+            cleaner = ctx.services.get("ram")
+            if not cleaner:
+                raise ApiError(409, "ram_off", "The RAM cleaner is turned off on the PC.")
+            res = await asyncio.to_thread(cleaner.clean, None)
+            return {"exit_code": 0, "output": f"Freed {res['freed'] // (1024 * 1024)} MB"}
         if name == "screenshot":
             from .screen import save_screenshot
 
