@@ -590,3 +590,16 @@ async def test_origin_accepts_any_lan_ip(env: Env):
     assert env.ctx.origin_ok("https://8.8.8.8:8765") is False
     assert env.ctx.origin_ok("https://evil.example:8765") is False
     assert env.ctx.origin_ok("http://192.168.1.4:8765") is False
+
+
+async def test_shell_versions_assets(env: Env):
+    # a browser must never reuse a stale stylesheet after an update: every css/js link is stamped
+    async with env.client() as c:
+        res = await c.get("/")
+    assert res.status_code == 200
+    assert res.headers["cache-control"] == "no-store"
+    body = res.text
+    # every css/js link carries a version stamp (dev adds an mtime suffix, so match the prefix)
+    assert f'href="/css/base.css?v={env.ctx.version}' in body
+    assert f'src="/js/app.js?v={env.ctx.version}' in body
+    assert "/css/tokens.css?v=" in body

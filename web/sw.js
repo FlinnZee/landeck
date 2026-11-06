@@ -36,6 +36,7 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(isNav ? '/' : event.request)),
+      // offline fallback: ignore the ?v= cache-busting query so a precached asset still matches
+      .catch(() => caches.match(isNav ? '/' : event.request, { ignoreSearch: true })),
   );
 });

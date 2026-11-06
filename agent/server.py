@@ -5,13 +5,14 @@ import contextlib
 import json
 import logging
 import mimetypes
+import re
 import time
 from pathlib import Path
 from typing import Any
 
 from fastapi import Body, Depends, FastAPI, Request, WebSocket
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -235,21 +236,37 @@ def create_app(ctx: Context) -> FastAPI:
     # --- static shell -----------------------------------------------------
 
     index = web / "index.html"
+    admin_html = web / "admin.html"
+
+    def shell_html(path: Path) -> Response:
+        # Stamp a version onto every /css and /js link so a browser can never reuse a stale
+        # stylesheet or script after an update — the URL itself changes. The shell document is
+        # served no-store, so the freshly-stamped links always reach the phone on the next open.
+        ver = ctx.version if not ctx.dev else f"{ctx.version}-{int(path.stat().st_mtime)}"
+        html = _version_assets(path.read_text("utf-8"), ver)
+        return Response(html, media_type="text/html; charset=utf-8", headers={"cache-control": "no-store"})
 
     @app.get("/")
     @app.get("/pair")
     async def shell():
-        return FileResponse(index, media_type="text/html")
+        return shell_html(index)
 
     @app.get("/admin")
     async def admin_page(request: Request):
         host = (request.headers.get("host") or "").rsplit(":", 1)[0].strip("[]").lower()
         if host not in ("localhost", "127.0.0.1", "::1"):
             raise ApiError(403, "bad_host", "Open the admin page via https://localhost.")
-        return FileResponse(web / "admin.html", media_type="text/html")
+        return shell_html(admin_html)
 
     app.mount("/", StaticFiles(directory=web), name="web")
     return GuardMiddleware(app, ctx)  # type: ignore[return-value]
+
+
+_ASSET_LINK = re.compile(r'(href|src)="(/(?:css|js)/[^"?]+)"')
+
+
+def _version_assets(html: str, ver: str) -> str:
+    return _ASSET_LINK.sub(lambda m: f'{m.group(1)}="{m.group(2)}?v={ver}"', html)
 
 
 def _quiet_resets(loop: asyncio.AbstractEventLoop, context: dict[str, Any]) -> None:

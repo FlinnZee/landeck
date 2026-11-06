@@ -52,3 +52,10 @@ Small calls made while building, one line each, so future me knows why.
   registry cache (win8.1+). It reports freed bytes as the rise in available memory.
 - Wake display nudges the mouse one pixel and sets ES_DISPLAY_REQUIRED; the SC_MONITORPOWER "on" message alone is
   unreliable from a background process, the input event is what actually wakes the screen.
+
+## v1.1.1
+
+- The shell HTML (`/`, `/pair`, `/admin`) is served `no-store` with a `?v=<version>` stamp on every css/js link, so a
+  browser can never reuse a stale stylesheet or script after an update. A phone that cached a broken `base.css` (serif
+  font, giant icons) self-heals on the next load. The service worker falls back to cache with `ignoreSearch` so the
+  version query doesn't break offline.
